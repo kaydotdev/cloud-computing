@@ -1,2 +1,3 @@
-# data-analysis
-Code from data analysis course
+# Data analysis
+
+Algorithms implementation from **Data Analysis** course in the university.
