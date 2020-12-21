@@ -1,16 +1,19 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import fire
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+class Merger(object):
+    @staticmethod
+    def hash_join(left_table, right_table):
+        print(f'Hash joining {left_table} and {right_table}')
+
+    @staticmethod
+    def loop_join(left_table, right_table):
+        print(f'Loop joining {left_table} and {right_table}')
+
+    @staticmethod
+    def merge_join(left_table, right_table):
+        print(f'Merge joining {left_table} and {right_table}')
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    fire.Fire(Merger)
