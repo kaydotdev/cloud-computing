@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS gamestore.users
 CREATE TABLE IF NOT EXISTS gamestore.games
 (
     name          varchar,
+    description   varchar,
     origin        varchar,
     genres        list<varchar>,
     developers    list<varchar>,
@@ -20,4 +21,3 @@ CREATE TABLE IF NOT EXISTS gamestore.games
 
     PRIMARY KEY (name)
 );
-
