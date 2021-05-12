@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace GameStore.Games.GetGamesById
 {
-    public static class getgamebyid
+    public static class GetGamesById
     {
         [FunctionName("getgamebyid")]
         public static async Task<IActionResult> Run(
