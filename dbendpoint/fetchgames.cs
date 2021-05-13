@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,18 +8,30 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+
+using Cassandra;
+using Cassandra.Mapping;
+using CSession = Cassandra.ISession;
 
 namespace GameStore.Games.FetchGames
 {
-    public static class FetchGames
+    public class FetchGames
     {
-        [FunctionName("fetchgames")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        private readonly CSession _session;
+        private readonly ILogger<FetchGames> _logger;
+
+        public FetchGames(ILogger<FetchGames> logger, CSession session)
         {
-            log.LogInformation($"Triggered game listing function with query params {{ {string.Join(", ", StringifyQueryCollection(req.Query))} }}");
+            _logger = logger;
+            _session = session;
+            _logger.LogInformation("Triggered function entry point");
+        }
+        
+        [FunctionName("fetchgames")]
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
+        {
+            _logger.LogInformation($"Triggered game listing function with query params {{ {string.Join(", ", StringifyQueryCollection(req.Query))} }}");
 
             var itemsLimit = Convert.ToInt32(Environment.GetEnvironmentVariable("ENV_ITEMS_LIMIT") ?? "50");
 
@@ -30,10 +41,22 @@ namespace GameStore.Games.FetchGames
             if (string.IsNullOrEmpty(pageId) || string.IsNullOrEmpty(itemsCount))
                 return new BadRequestErrorMessageResult("One or more required arguments missing");
             
-            if (Convert.ToInt32(itemsCount) > itemsLimit)
+            var itemsToFetch = Convert.ToInt32(itemsCount);
+            var page = Convert.ToInt32(itemsCount);
+            
+            if (itemsToFetch > itemsLimit)
                 return new BadRequestErrorMessageResult($"Request unit count exceeded limit in {itemsLimit} RU");
+            
+            if (!(0 < itemsToFetch && 0 < page))
+                return new BadRequestErrorMessageResult($"One or more required arguments out of range");
+            
+            IMapper mapper = new Mapper(_session);
+            var games = await mapper.FetchAsync<Game.Game>(@"SELECT name, description, origin, genres,
+                                                                               developers, release_date, price_history
+                                                                               FROM gamestore.games
+                                                                               LIMIT ?", itemsToFetch);
 
-            return new OkObjectResult("Passed preliminary checks");
+            return new OkObjectResult(games);
         }
 
         private static string[] StringifyQueryCollection(IQueryCollection query) =>
