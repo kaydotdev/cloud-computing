@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Logging;
 
 using Cassandra;
 using Cassandra.Mapping;
+using Cassandra.Data.Linq;
 using CSession = Cassandra.ISession;
 
 namespace GameStore.Games.FetchGames
@@ -24,8 +26,6 @@ namespace GameStore.Games.FetchGames
         {
             _logger = logger;
             _session = session;
-            _logger.LogInformation("Triggered function entry point");
-
             session.UserDefinedTypes.Define(
                 UdtMap.For<Game.PriceHistory>("price_record")
                     .Map(p => p.DatePrice, "date_price")
@@ -41,30 +41,19 @@ namespace GameStore.Games.FetchGames
             _logger.LogInformation($"Triggered game listing function with query params {{ {string.Join(", ", StringifyQueryCollection(req.Query))} }}");
 
             var itemsLimit = Convert.ToInt32(Environment.GetEnvironmentVariable("ENV_ITEMS_LIMIT") ?? "50");
+            string pagingState =  req.Query["pagingState"];
+            
+            var statement = Cql.New(@"SELECT name, description, origin, genres,
+                                        developers, release_date, price_history
+                                        FROM gamestore.games").WithOptions(opt =>
+                opt.SetPageSize(itemsLimit)
+                    .SetPagingState(!string.IsNullOrEmpty(pagingState) ?
+                        Convert.FromBase64String(pagingState) : null));
 
-            string pageId = req.Query["pageId"];
-            string itemsCount =  req.Query["itemsCount"];
-
-            if (string.IsNullOrEmpty(pageId) || string.IsNullOrEmpty(itemsCount))
-                return new BadRequestErrorMessageResult("One or more required arguments missing");
+            var mapper = new Mapper(_session);
+            var page = await mapper.FetchPageAsync<Game.Game>(statement);
             
-            var itemsToFetch = Convert.ToInt32(itemsCount);
-            var page = Convert.ToInt32(itemsCount);
-            
-            if (itemsToFetch > itemsLimit)
-                return new BadRequestErrorMessageResult($"Request unit count exceeded limit in {itemsLimit} RU");
-            
-            if (!(0 < itemsToFetch && 0 < page))
-                return new BadRequestErrorMessageResult($"One or more required arguments out of range");
-            
-            IMapper mapper = new Mapper(_session);
-            var games = await mapper.FetchAsync<Game.Game>(
-                @"SELECT name, description, origin, genres,
-                   developers, release_date, price_history
-                   FROM gamestore.games
-                   LIMIT ?", itemsToFetch);
-
-            return new OkObjectResult(games);
+            return new OkObjectResult(new { Page = page.AsEnumerable(), PagingState = page.PagingState });
         }
 
         private static string[] StringifyQueryCollection(IQueryCollection query) =>
