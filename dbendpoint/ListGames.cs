@@ -10,17 +10,17 @@ using Microsoft.Extensions.Logging;
 
 using Cassandra;
 using Cassandra.Mapping;
-using GameStore.Games.Game;
+using GameStore.Games.DTOs;
 using CSession = Cassandra.ISession;
 
 namespace GameStore.Games.FetchGames
 {
-    public class FetchGamesNoPrices
+    public class ListGames
     {
         private readonly CSession _session;
-        private readonly ILogger<FetchGamesNoPrices> _logger;
+        private readonly ILogger<ListGames> _logger;
 
-        public FetchGamesNoPrices(ILogger<FetchGamesNoPrices> logger, CSession session)
+        public ListGames(ILogger<ListGames> logger, CSession session)
         {
             _logger = logger;
             _session = session;
@@ -32,9 +32,10 @@ namespace GameStore.Games.FetchGames
                     .Map(p => p.DiscountOnPrice, "discount_on_price"));
         }
         
-        [FunctionName("fetchgamesnoprices")]
+        [FunctionName("ListGames")]
         public async Task<IActionResult> RunAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]
+            HttpRequest req, ILogger log)
         {
             _logger.LogInformation($"Triggered game listing function with query params {{ {string.Join(", ", StringifyQueryCollection(req.Query))} }}");
 
@@ -42,14 +43,14 @@ namespace GameStore.Games.FetchGames
             string pagingState =  req.Query["pagingState"];
             
             var statement = Cql.New(@"SELECT name, description, origin, genres,
-                                        developers, release_date
+                                        developers, release_date, price_history
                                         FROM gamestore.games").WithOptions(opt =>
                 opt.SetPageSize(itemsLimit)
                     .SetPagingState(!string.IsNullOrEmpty(pagingState) ?
                         Convert.FromBase64String(pagingState) : null));
 
             var mapper = new Mapper(_session);
-            var page = await mapper.FetchPageAsync<GamePreview>(statement);
+            var page = await mapper.FetchPageAsync<Game>(statement);
             
             return new OkObjectResult(new { Page = page.AsEnumerable(), PagingState = page.PagingState });
         }

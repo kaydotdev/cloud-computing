@@ -4,6 +4,7 @@ using System;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using GameStore.Games.DTOs;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,7 +30,7 @@ namespace GameStore.Games.StartUp
             builder.Services.AddScoped<ISession>(s => cluster.Connect("gamestore"));
             
             MappingConfiguration.Global.Define(
-                new Map<Game.Game>()
+                new Map<Game>()
                     .TableName("games")
                     .PartitionKey(g => g.Name)
                     .Column(g => g.Name, cm => cm.WithName("name"))
