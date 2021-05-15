@@ -25,6 +25,13 @@ namespace GameStore.Games.FetchGames
             _logger = logger;
             _session = session;
             _logger.LogInformation("Triggered function entry point");
+
+            session.UserDefinedTypes.Define(
+                UdtMap.For<Game.PriceHistory>("price_record")
+                    .Map(p => p.DatePrice, "date_price")
+                    .Map(p => p.InitialPrice, "initial_price")
+                    .Map(p => p.FinalPrice, "final_price")
+                    .Map(p => p.DiscountOnPrice, "discount_on_price"));
         }
         
         [FunctionName("fetchgames")]
@@ -51,10 +58,11 @@ namespace GameStore.Games.FetchGames
                 return new BadRequestErrorMessageResult($"One or more required arguments out of range");
             
             IMapper mapper = new Mapper(_session);
-            var games = await mapper.FetchAsync<Game.Game>(@"SELECT name, description, origin, genres,
-                                                                               developers, release_date, price_history
-                                                                               FROM gamestore.games
-                                                                               LIMIT ?", itemsToFetch);
+            var games = await mapper.FetchAsync<Game.Game>(
+                @"SELECT name, description, origin, genres,
+                   developers, release_date, price_history
+                   FROM gamestore.games
+                   LIMIT ?", itemsToFetch);
 
             return new OkObjectResult(games);
         }

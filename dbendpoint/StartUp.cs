@@ -27,6 +27,19 @@ namespace GameStore.Games.StartUp
                 .AddContactPoint(hostContactPoint).WithSSL(options).Build();
             
             builder.Services.AddScoped<ISession>(s => cluster.Connect("gamestore"));
+            
+            MappingConfiguration.Global.Define(
+                new Map<Game.Game>()
+                    .TableName("games")
+                    .PartitionKey(g => g.Name)
+                    .Column(g => g.Name, cm => cm.WithName("name"))
+                    .Column(g => g.Description, cm => cm.WithName("description"))
+                    .Column(g => g.Origin, cm => cm.WithName("origin"))
+                    .Column(g => g.Genres, cm => cm.WithName("genres"))
+                    .Column(g => g.Developers, cm => cm.WithName("developers"))
+                    .Column(g => g.ReleaseDate, cm => cm.WithName("release_date"))
+                    .Column(g => g.PriceHistory, cm => cm.WithName("price_history"))
+            );
         }
 
         private static bool ValidateServerCertificate(

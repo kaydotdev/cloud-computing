@@ -10,7 +10,15 @@ namespace GameStore.Games.Game
         public string Origin { get; set; }
         public IEnumerable<string> Genres { get; set; }
         public IEnumerable<string> Developers { get; set; }
-        public DateTime Release_Date { get; set; }
-        public IDictionary<DateTime, double> Price_History { get; set; }
+        public DateTime ReleaseDate { get; set; }
+        public PriceHistory[] PriceHistory { get; set; }
+    }
+
+    public class PriceHistory
+    {
+        public DateTime DatePrice { get; set; }
+        public double InitialPrice { get; set; }
+        public double FinalPrice { get; set; }
+        public int DiscountOnPrice { get; set; }
     }
 }
