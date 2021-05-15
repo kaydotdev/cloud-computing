@@ -1,3 +1,11 @@
+CREATE TYPE IF NOT EXISTS gamestore.price_record
+(
+	date_price timestamp,
+	initial_price double,
+	final_price double,
+	discount_on_price int
+);
+
 CREATE TABLE IF NOT EXISTS gamestore.users
 (
     nickname           varchar,
@@ -17,7 +25,7 @@ CREATE TABLE IF NOT EXISTS gamestore.games
     genres        list<varchar>,
     developers    list<varchar>,
     release_date  timestamp,
-    price_history map<timestamp, double>,
+    price_history list<FROZEN<price_record>>,
 
     PRIMARY KEY (name)
 );
