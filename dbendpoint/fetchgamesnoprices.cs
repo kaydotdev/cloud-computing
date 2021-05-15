@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -10,7 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 using Cassandra;
-using Cassandra.Data.Linq;
 using Cassandra.Mapping;
 using GameStore.Games.Game;
 using CSession = Cassandra.ISession;
@@ -41,26 +39,19 @@ namespace GameStore.Games.FetchGames
             _logger.LogInformation($"Triggered game listing function with query params {{ {string.Join(", ", StringifyQueryCollection(req.Query))} }}");
 
             var itemsLimit = Convert.ToInt32(Environment.GetEnvironmentVariable("ENV_ITEMS_LIMIT") ?? "50");
+            string pagingState =  req.Query["pagingState"];
+            
+            var statement = Cql.New(@"SELECT name, description, origin, genres,
+                                        developers, release_date
+                                        FROM gamestore.games").WithOptions(opt =>
+                opt.SetPageSize(itemsLimit)
+                    .SetPagingState(!string.IsNullOrEmpty(pagingState) ?
+                        Convert.FromBase64String(pagingState) : null));
 
-            string pageId = req.Query["pageId"];
-            string itemsCount =  req.Query["itemsCount"];
-
-            if (string.IsNullOrEmpty(pageId) || string.IsNullOrEmpty(itemsCount))
-                return new BadRequestErrorMessageResult("One or more required arguments missing");
+            var mapper = new Mapper(_session);
+            var page = await mapper.FetchPageAsync<GamePreview>(statement);
             
-            var itemsToFetch = Convert.ToInt32(itemsCount);
-            var page = Convert.ToInt32(itemsCount);
-            
-            if (itemsToFetch > itemsLimit)
-                return new BadRequestErrorMessageResult($"Request unit count exceeded limit in {itemsLimit} RU");
-            
-            if (!(0 < itemsToFetch && 0 < page))
-                return new BadRequestErrorMessageResult($"One or more required arguments out of range");
-            
-            var games = new Table<Game.Game>(_session);
-            var resultGames = games.Skip((page - 1) * itemsToFetch).Take(itemsToFetch).AsEnumerable();
-
-            return new OkObjectResult(resultGames);
+            return new OkObjectResult(new { Page = page.AsEnumerable(), PagingState = page.PagingState });
         }
         
         private static string[] StringifyQueryCollection(IQueryCollection query) =>
