@@ -33,13 +33,24 @@ namespace GameStore.Games.StartUp
                 new Map<Game>()
                     .TableName("games")
                     .PartitionKey(g => g.Name)
+                    .Column(g => g.AppId, cm => cm.WithName("app_id"))
                     .Column(g => g.Name, cm => cm.WithName("name"))
                     .Column(g => g.Description, cm => cm.WithName("description"))
                     .Column(g => g.Origin, cm => cm.WithName("origin"))
                     .Column(g => g.Genres, cm => cm.WithName("genres"))
                     .Column(g => g.Developers, cm => cm.WithName("developers"))
                     .Column(g => g.ReleaseDate, cm => cm.WithName("release_date"))
-                    .Column(g => g.PriceHistory, cm => cm.WithName("price_history"))
+                    .Column(g => g.PriceHistory, cm => cm.WithName("price_history")),
+                new Map<GamePreview>()
+                    .TableName("games")
+                    .PartitionKey(g => g.Name)
+                    .Column(g => g.AppId, cm => cm.WithName("app_id"))
+                    .Column(g => g.Name, cm => cm.WithName("name"))
+                    .Column(g => g.Description, cm => cm.WithName("description"))
+                    .Column(g => g.Origin, cm => cm.WithName("origin"))
+                    .Column(g => g.Genres, cm => cm.WithName("genres"))
+                    .Column(g => g.Developers, cm => cm.WithName("developers"))
+                    .Column(g => g.ReleaseDate, cm => cm.WithName("release_date"))
             );
         }
 

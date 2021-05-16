@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS gamestore.users
 
 CREATE TABLE IF NOT EXISTS gamestore.games
 (
+    app_id        int,
     name          varchar,
     description   varchar,
     origin        varchar,
@@ -27,5 +28,6 @@ CREATE TABLE IF NOT EXISTS gamestore.games
     release_date  timestamp,
     price_history list<FROZEN<price_record>>,
 
-    PRIMARY KEY (name)
-);
+    PRIMARY KEY (app_id, name)
+)
+WITH CLUSTERING ORDER BY (name ASC);

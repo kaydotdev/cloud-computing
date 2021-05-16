@@ -42,7 +42,7 @@ namespace GameStore.Games.FetchGames
             var itemsLimit = Convert.ToInt32(Environment.GetEnvironmentVariable("ENV_ITEMS_LIMIT") ?? "50");
             string pagingState =  req.Query["pagingState"];
             
-            var statement = Cql.New(@"SELECT name, description, origin, genres,
+            var statement = Cql.New(@"SELECT app_id, name, description, origin, genres,
                                         developers, release_date
                                         FROM gamestore.games").WithOptions(opt =>
                 opt.SetPageSize(itemsLimit)

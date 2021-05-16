@@ -43,7 +43,7 @@ namespace GameStore.Games.FetchGames
             if (string.IsNullOrEmpty(gameName))
                 return new BadRequestErrorMessageResult("Game name is not specified in query parameters");
 
-            const string query = "SELECT price_history FROM gamestore.games WHERE name = ?";
+            const string query = "SELECT price_history FROM gamestore.games WHERE name = ? ALLOW FILTERING";
             var mapper = new Mapper(_session);
             var priceHistory = await mapper.FirstOrDefaultAsync<PriceHistory[]>(query, gameName);
             
