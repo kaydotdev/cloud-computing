@@ -31,3 +31,15 @@ CREATE TABLE IF NOT EXISTS gamestore.games
     PRIMARY KEY (app_id, name)
 )
 WITH CLUSTERING ORDER BY (name ASC);
+
+CREATE TABLE IF NOT EXISTS gamestore.comments
+(
+    id          uuid,
+    app_id      int,
+    nickname    varchar,
+    date_time   timestamp,
+    containment varchar,
+
+    PRIMARY KEY (id, app_id, nickname)
+)
+WITH CLUSTERING ORDER BY (app_id ASC);
