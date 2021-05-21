@@ -4,8 +4,6 @@ from joblib import load
 import azure.functions as func
 
 import nltk
-from nltk.tokenize import word_tokenize  
-from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
 nltk.download('wordnet')
@@ -39,12 +37,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         req_body = req.get_json()
     except ValueError:
-        return func.HttpResponse("Request body is missing.", status_code=400)
+        return func.HttpResponse(
+            json.dumps({
+                "message": "Request body is missing."
+            }),
+            status_code=400
+        )
     else:
         comment = req_body.get('comment')
 
-    if (comment is None):
-        return func.HttpResponse("Required body parameters are missing.", status_code=400)
+    if comment is None:
+        return func.HttpResponse(
+            json.dumps({
+                "message": "Required body parameters are missing."
+            }),
+            status_code=400
+        )
 
     lemmatizer = WordNetLemmatizer()
 
